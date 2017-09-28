@@ -40,7 +40,7 @@ class XMPPMessage(Plugin):
     @staticmethod
     def get_group_url(group):
         return absolute_uri(reverse('sentry-group', args=[
-            group.team.slug,
+            group.project.organization.slug,
             group.project.slug,
             group.id,
             ]))

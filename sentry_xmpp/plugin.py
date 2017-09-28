@@ -14,9 +14,12 @@ log = logging.getLogger(__name__)
 class XMPPOptionsForm(forms.Form):
     jid = forms.CharField()
     password = forms.CharField(required=False)
+    hostname = forms.CharField(required=False)
+    port = forms.IntegerField(required=False, min_value=1, max_value=2 ** 16 - 1)
+    use_tls = forms.BooleanField(required=False)
+    use_ssl = forms.BooleanField(required=False)
     nick = forms.CharField()
     room = forms.CharField()
-
     room_password = forms.CharField(required=False)
 
 
@@ -63,6 +66,10 @@ class XMPPMessage(Plugin):
     def send_payload(self, project, message):
         jid = self.get_option('jid', project)
         password = self.get_option('password', project)
+        hostname = self.get_option('hostname', project)
+        port = self.get_option('port', project)
+        use_tls = self.get_option('use_tls', project)
+        use_ssl = self.get_option('use_ssl', project)
         nick = self.get_option('nick', project)
         room = self.get_option('room', project)
         room_password = self.get_option('room_password', project)
@@ -72,7 +79,15 @@ class XMPPMessage(Plugin):
         xmpp.register_plugin('xep_0045')  # Multi-User Chat
         xmpp.register_plugin('xep_0199')  # XMPP Ping
 
-        if xmpp.connect():
+        connect_kwargs = {}
+        if hostname and port:
+            connect_kwargs = {
+                'address': (hostname, port),
+                'use_tls': use_tls,
+                'use_ssl': use_ssl,
+            }
+
+        if xmpp.connect(**connect_kwargs):
             xmpp.process(block=False)
         else:
             log.error("XMPP Bot was unable to make a connection", *(jid, password, nick, room))
